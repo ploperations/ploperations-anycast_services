@@ -1,0 +1,34 @@
+<%- |
+  String[1] $zebra_hostname,
+  Sensitive[String[1]] $zebra_enable_password,
+  Sensitive[String[1]] $zebra_password,
+  Stdlib::Absolutepath $quagga_log_directory,
+  String[1] $zebra_log_file,
+  Array[Anycast_services::CIDR] $zebra_anycast_addresses,
+  Stdlib::IP::Address::V4::Nosubnet $zebra_router_id,
+  Array $zebra_interfaces,
+| -%>
+! This file is manged by Puppet.
+! Manual changes or changes via vtysh will be overwritten
+!
+hostname <%= $zebra_hostname %>
+password <%= $zebra_password %>
+enable password <%= $zebra_enable_password %>
+log file <%= $quagga_log_directory %>/<%= $zebra_log_file %>
+!
+<% delete($zebra_interfaces, 'lo').each |$interface| { -%>
+interface <%= $interface %>
+!
+<% } -%>
+interface lo
+ description loopback
+<% $zebra_anycast_addresses.each |$zebra_anycast_address| { -%>
+ ip address <%= $zebra_anycast_address %>
+<% } -%>
+!
+router-id <%= $zebra_router_id %>
+ip forwarding
+!
+!
+line vty
+!

@@ -1,0 +1,37 @@
+<%- |
+  Array $ospfd_interfaces,
+  Array[Hash[String[1], Stdlib::IP::Address::V4]] $ospfd_anycast_networks,
+  Boolean $ospfd_log_adjacency_changes,
+  Integer $ospfd_auto_cost_reference_bandwidth,
+  Sensitive[String[1]] $ospfd_password,
+  Stdlib::Absolutepath $quagga_log_directory,
+  Stdlib::IP::Address::V4::Nosubnet $ospfd_router_id,
+  String[1] $ospfd_hostname,
+  String[1] $ospfd_log_file,
+| -%>
+! This file is manged by Puppet.
+! Manual changes or changes via vtysh will be overwritten
+!
+hostname <%= $ospfd_hostname %>
+password <%= $ospfd_password %>
+log file <%= $quagga_log_directory %>/<%= $ospfd_log_file %>
+!
+!
+!
+<% $ospfd_interfaces.each |$interface| { -%>
+interface <%= $interface %>
+!
+<% } -%>
+router ospf
+ ospf router-id <%= $ospfd_router_id %>
+<% if $ospfd_log_adjacency_changes == true { -%>
+ log-adjacency-changes
+<% } -%>
+! Important: ensure reference bandwidth is consistent across all routers
+ auto-cost reference-bandwidth <%= $ospfd_auto_cost_reference_bandwidth %>
+<% $ospfd_anycast_networks.each |$ospfd_anycast_network| { -%> 
+ network <%= $ospfd_anycast_network['address'] %> area <%= $ospfd_anycast_network['area'] %>
+<% } -%>
+!
+line vty
+!
